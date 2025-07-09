@@ -19,7 +19,7 @@
  * 
  */
 class Board {
-
+    friend class BoardFixture; // Allow BoardFixture to access private members for testing
     public: 
 
         /**

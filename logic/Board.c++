@@ -269,7 +269,7 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer2() const {
                 if (dice[j] > 0) { // Check if the die is available
                     int targetPosition = i - (j + 1); // Calculate target position
                     if (targetPosition >= 0 && player1[targetPosition] <= 1) { // Valid move to an open point (can't bear off)
-                        moves.emplace_back(i, j); // Add valid move
+                        moves.emplace_back(i, - (j + 1)); // Add valid move
                     }
                 }
             }
