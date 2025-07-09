@@ -14,6 +14,24 @@ Board::Board() {
     std::srand(static_cast<unsigned int>(std::time(nullptr))); // Seed the random number generator
 }
 
+Board::Board(const int boardState[26]) {
+    // Initialize player positions from the provided board state
+    for (int i = 0; i < 24; ++i) {
+        if (boardState[i] < 0) {
+            player1[i] = 0; 
+            player2[i] = -boardState[i]; 
+        } else {
+            player1[i] = boardState[i]; // Player 1's pieces
+            player2[i] = 0; // Player 2 has no pieces on this position
+        }
+    }
+    // Initialize dice and current player
+    std::fill(std::begin(dice), std::end(dice), 0);
+    currentPlayer = 1; // Default to player 1
+    bar1 = boardState[24]; // Number of pieces on the bar for player 1
+    bar2 = boardState[25]; // Number of pieces on the bar for player 2
+}
+
 Board::~Board() {
     // Destructor does not need to do anything special for this implementation
 }
@@ -95,6 +113,24 @@ void Board::changePlayer() {
 
 int Board::getCurrentPlayer() const {
     return currentPlayer; // Return the current player
+}
+
+void Board::step(int from, int distance) {
+    move(from, distance); // Move the piece from the specified position
+    if (std::all_of(dice, dice + 6, [](uint8_t d) { return d == 0; })) {
+        // If all dice have been used, change the player and roll new dice
+        changePlayer();
+        rollDice();
+    }
+    else {
+        // If there are still dice available, check to see if the player can make any valid moves
+        auto moves = validMoves();
+        if (moves.empty()) {
+            // If no valid moves are available, change the player and roll new dice
+            changePlayer();
+            rollDice();
+        }
+    }
 }
 
 void Board::move(int from, int distance) {
@@ -281,17 +317,41 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer2() const {
 
 
 void Board::handlePlayer1Move(int from, int distance) {
-    return; // Finish implementation
+    if (distance == 7) {
+        player1[from]++; // If distance is 7, it means placing a piece from the bar
+        bar1--; // Remove a piece from the bar
+        return;
+    }
+    player1[from]--; // Remove a piece from the starting position
+    int targetPosition = from + distance; // Calculate the target position
+    player1[targetPosition]++; // Place a piece in the target position
+    if (player2[targetPosition] == 1) {
+        player2[targetPosition] = 0;
+        bar2++; // If there was an opponent's piece, move it to the bar
+    }
+    dice[distance - 1]--; // Mark the die as used
 }
 
 void Board::handlePlayer2Move(int from, int distance) {
-    return; // Finish implementation
+    if (distance == 7) {
+        player2[from]++; // If distance is 7, it means placing a piece from the bar
+        bar2--; // Remove a piece from the bar
+        return;
+    }
+    player2[from]--; // Remove a piece from the starting position
+    int targetPosition = from + distance; // Calculate the target position
+    player2[targetPosition]++; // Place a piece in the target position
+    if (player1[targetPosition] == 1) {
+        player1[targetPosition] = 0;
+        bar1++; // If there was an opponent's piece, move it to the bar
+    }
+    dice[-distance - 1]--; // Mark the die as used (negative index for player 2)
 }
 
 bool Board::isGameOver() const {
     // Check if either player has won the game by bearing off all their pieces
-    bool player1Won = std::all_of(player1, player1 + 24, [](uint8_t p) { return p == 0; });
-    bool player2Won = std::all_of(player2, player2 + 24, [](uint8_t p) { return p == 0; });
+    bool player1Won = std::all_of(player1, player1 + 24, [](uint8_t p) { return p == 0; }) && bar1 == 0;
+    bool player2Won = std::all_of(player2, player2 + 24, [](uint8_t p) { return p == 0; }) && bar2 == 0;
     
     return player1Won || player2Won;
 }

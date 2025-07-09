@@ -30,6 +30,18 @@ class Board {
         Board();
 
         /**
+         * @brief Create a new Board object from a character array.
+         * This constructor initializes the board from a character array representing the board state.
+         * @param boardState An integer array representing the board state. 
+         * Size of the array is 26 (24 positions + 2 bars).
+         * The first 24 elements represent the positions on the board,
+         * the 25th element represents the bar for player 1,
+         * and the 26th element represents the bar for player 2.
+         */
+        Board(const int boardState[26]);
+        
+
+        /**
          * @brief Destroys the Board object.
          * This destructor cleans up any resources used by the Board.
          */
@@ -75,6 +87,15 @@ class Board {
          * @throws std::out_of_range if the move goes out of bounds.
          */
         void move(int from, int distance);
+
+        /**
+         * @brief Moves a player's piece from a specified position by a given distance. 
+         * Switches to the next player if all dice are used and rolls again. 
+         * @param from The starting position of the piece to be moved.
+         * @param distance The number of spaces to move the piece.
+         * This method updates the player's position on the board.
+         */
+        void step(int from, int distance);
 
         /**
          * @brief Changes the current player.

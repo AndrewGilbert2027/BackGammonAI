@@ -1,0 +1,17 @@
+1. Finish the array constructor to be used for testing and easy setup of custom game positions for testing. 
+2. Finish testing bar positions, bear off positions, regular positions, etc. 
+3. Finish final validMoves function that takes into account the nuance of choosing moves that use the most amount of dice. (DFS) 
+4. Implement function that returns the current winner for that board or some null character if game is continuing. 
+5. Test speed of current implementation and write code that benchmarks the non-optimized version. 
+6. After all logic is implemented with sufficient tests written, start optimizing the code to use less memory (bitboards). 
+7. Test optimized version. 
+8. Test speed of optimized version and benchmark performance. 
+9. Write implementation only using structs and test speed. 
+
+
+// Unrelated to game logic
+9. Write class that handles monte carlo tree search while keeping track of stochastic nature of environment in c++. 
+10. Test Monte Carlo tree search
+11. Integrate torch model in c++ (if possible) 
+12. Create Python bindings for c++ and get training logic in python with backpropagation 
+13. Train model based on Tesauro and also train based on tweaked version of alphazero. 
