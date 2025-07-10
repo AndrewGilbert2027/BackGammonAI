@@ -147,8 +147,12 @@ void Board::move(int from, int distance) {
 }
 
 
+// std::vector<std::pair<int, int>> Board::validMoves() const {
+//     return (currentPlayer == 1) ? validMovesPlayer1() : validMovesPlayer2();
+// }
+
 std::vector<std::pair<int, int>> Board::validMoves() const {
-    return (currentPlayer == 1) ? validMovesPlayer1() : validMovesPlayer2();
+    return (currentPlayer == 1) ? validMovesDFS1() : validMovesDFS2();
 }
 
 
@@ -156,6 +160,132 @@ std::vector<std::pair<int, int>> Board::validMoves() const {
 //////////////////////////////////////////////////
 //// HELPER FUNCTIONS FOR VALID MOVES ////
 //////////////////////////////////////////////////
+
+/**
+ * @brief Returns the minimum amount of die left that can be possible for player 1 given a board. 
+ * This function recursively checks all valid moves for player 1 and returns the minimum die left after making those moves.
+ * @param b The current board state.
+ * @return The minimum die left for player 1 after making valid moves.
+ */
+int getMinimumDieLeft1(Board b) {
+    auto moves = b.validMovesPlayer1(); 
+    if (moves.empty()) {
+        return b.diceLeft(); 
+    }
+    int minDie = 7; // Initialize to a value greater than the amount of dice available
+    for (const auto& move : moves) {
+        int c = getMinimumDieLeft1(b.stepReturn(move.first, move.second)); // Recursively check the next state
+        minDie = std::min(minDie, c); // Update the minimum die found
+    }
+    return minDie; // Return the minimum die found
+}
+
+
+std::vector<std::pair<int, int>> Board::validMovesDFS1() const {
+    auto moves = validMovesPlayer1(); // Get all valid moves for player 1
+    if (moves.empty()) {
+        return moves; // Return empty if no valid moves
+    }
+
+    std::vector<int> diceLeftPossible(moves.size(), 8); // Set dice left to a value greater than possible
+    int dieLeftMin = 7; // Initialize minimum die left greater than the maximum possible (4) 
+    for (size_t i = 0; i < moves.size(); ++i) {
+        Board b = stepReturn(moves[i].first, moves[i].second); // Get the board state after the move
+        diceLeftPossible[i] = getMinimumDieLeft1(b); // Get the minimum die used in the next state
+        dieLeftMin = std::min(dieLeftMin, diceLeftPossible[i]); // Update the minimum die found
+    }
+    std::vector<std::pair<int, int>> validMoves;
+    if (dieLeftMin == 0) { // Return any move that can use all possible die
+        for (size_t i = 0; i < moves.size(); ++i) {
+            if (diceLeftPossible[i] == 0) { // If the move uses the minimum die found
+                validMoves.push_back(moves[i]); 
+            }
+        }
+        return validMoves; // Return valid moves if minimum die is 0
+    }
+
+    // If there are no moves that use all possible dice, we can only choose moves that use the highest possible die. 
+    int maxDice = 0; // Variable to track the maximum die used (set to 0 (impossible))
+    for (size_t i = 0; i < moves.size(); ++i) {
+        if (diceLeftPossible[i] == dieLeftMin) { // If the move uses the minimum die found
+            maxDice = std::max(maxDice, moves[i].second); // Update the maximum die used
+        }
+    }
+
+    for (size_t i = 0; i < moves.size(); ++i) {
+        if (diceLeftPossible[i] == dieLeftMin && moves[i].second == maxDice) { // If the move uses the most amount of die and has highest dice face. 
+            validMoves.push_back(moves[i]); 
+        }
+    }
+    return validMoves; // Return valid moves
+}
+
+/**
+ * @brief Returns the minimum amount of die left that can be possible for player 1 given a board. 
+ * This function recursively checks all valid moves for player 1 and returns the minimum die left after making those moves.
+ * @param b The current board state.
+ * @return The minimum die left for player 1 after making valid moves.
+ */
+int getMinimumDieLeft2(Board b) {
+    auto moves = b.validMovesPlayer2(); 
+    if (moves.empty()) {
+        return b.diceLeft(); 
+    }
+    int minDie = 7; // Initialize to a value greater than the amount of dice available
+    for (const auto& move : moves) {
+        int c = getMinimumDieLeft2(b.stepReturn(move.first, move.second)); // Recursively check the next state
+        minDie = std::min(minDie, c); // Update the minimum die found
+    }
+    return minDie; // Return the minimum die found
+}
+
+
+
+/**
+ * @brief Returns all valid moves for player 2 using a depth-first search approach.
+ * This method checks player 2's pieces and the rolled dice to determine all possible moves.
+ * This method is used to explore all possible moves for player 2 and make sure it only returns moves
+ * that are valid according to the game rules (using moves that allow the maximum amount of dice to be used).
+ * @return A vector of pairs, where each pair contains the starting position and the distance to move.
+ */
+std::vector<std::pair<int, int>> Board::validMovesDFS2() const {
+    auto moves = validMovesPlayer2(); // Get all valid moves for player 1
+    if (moves.empty()) {
+        return moves; // Return empty if no valid moves
+    }
+
+    std::vector<int> diceLeftPossible(moves.size(), 8); // Set dice left to a value greater than possible
+    int dieLeftMin = 7; // Initialize minimum die left greater than the maximum possible (4) 
+    for (size_t i = 0; i < moves.size(); ++i) {
+        Board b = stepReturn(moves[i].first, moves[i].second); // Get the board state after the move
+        diceLeftPossible[i] = getMinimumDieLeft2(b); // Get the minimum amount of die left
+        dieLeftMin = std::min(dieLeftMin, diceLeftPossible[i]); 
+    }
+    std::vector<std::pair<int, int>> validMoves;
+    if (dieLeftMin == 0) { // Return any move that can use all possible die
+        for (size_t i = 0; i < moves.size(); ++i) {
+            if (diceLeftPossible[i] == 0) { // If the move uses the minimum die found
+                validMoves.push_back(moves[i]); 
+            }
+        }
+        return validMoves; // Return valid moves if minimum die is 0
+    }
+
+    // If there are no moves that use all possible dice, we can only choose moves that use the highest possible die. 
+    int minDice = 0; // Variable to track the maximum die used (set to -7 for player2 (impossible))
+    for (size_t i = 0; i < moves.size(); ++i) {
+        if (diceLeftPossible[i] == dieLeftMin) { // If the move uses the minimum die found
+            minDice = std::min(minDice, moves[i].second); // Using min here because player 2 has negative to 
+        }
+    }
+
+    for (size_t i = 0; i < moves.size(); ++i) {
+        if (diceLeftPossible[i] == dieLeftMin && moves[i].second == minDice) { // If the move uses the most amount of die and has highest dice face. 
+            validMoves.push_back(moves[i]); 
+        }
+    }
+    return validMoves; // Return valid moves
+}
 
 std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
     std::vector<std::pair<int, int>> moves;
@@ -225,23 +355,6 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
 
 std::vector<std::pair<int, int>> Board::validMovesPlayer2() const {
     std::vector<std::pair<int, int>> moves;
-
-    /*
-    1. Check if player 1 has pieces on the bar. 
-    If so, they must move a piece from the bar to the board.
-
-    2. Check each piece on the board for valid moves based on the current dice. 
-    - If player 1 has pieces on the bar, they can only move a piece from the bar. 
-    - If player 1 has no pieces on the bar, they can move any piece on the board.
-    - A player must move a piece to an open point (a point that is either empty, occupied by their own pieces, or occupied by a single opponent's piece).
-    - A player must choose moves that will use the maxiumum amount of die. 
-    - If a player can only use one die, they must use it if it results in a valid move. 
-    - If using one die results in the other die being invalid for both the die, the player must use the larger die. 
-    - A player can only bear off pieces if all of their pieces are in their home board 
-    - If a player can bear off and there is a piece in the position of the dice roll, they must bear off that piece. 
-    - If a player can bear off and there is no piece in the position of the dice roll, they must move pieces that are higher in position.
-        If there are no pieces higher in position, they can bear off any piece in their home board. 
-    */
 
     // Check if player 1 has pieces on the bar (must place a piece from the bar)
     if (bar2 > 0) {

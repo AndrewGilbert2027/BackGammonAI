@@ -2,6 +2,7 @@
 #define BOARD_H
 #include <inttypes.h>
 #include <vector>
+#include <numeric> // For std::accumulate
 
 
 
@@ -20,6 +21,7 @@
  */
 class Board {
     friend class BoardFixture; // Allow BoardFixture to access private members for testing
+    
     public: 
 
         /**
@@ -123,6 +125,10 @@ class Board {
          */
         bool diceAvailable(int face) const;
 
+        uint8_t diceLeft() const {
+            return std::accumulate(std::begin(dice), std::end(dice), 0); // Returns the total number of available dice
+        }
+
         /**
          * @brief Gets the number of pieces on the bar for player 1.
          * @return The number of pieces on the bar for player 1.
@@ -145,6 +151,27 @@ class Board {
          * and the second element is the distance to move the piece.
          */
         std::vector<std::pair<int, int>> validMoves() const;
+
+         
+        /**
+         * @brief Returns all valid moves for player 1.
+         * This method checks player 1's pieces and the rolled dice to determine all possible moves.
+         * @return A vector of pairs, where each pair contains the starting position and the distance to move.
+         */
+        std::vector<std::pair<int, int>> validMovesPlayer1() const;
+
+        /**
+         * @brief Returns all valid moves for player 2.
+         * This method checks player 2's pieces and the rolled dice to determine all possible moves.
+         * @return A vector of pairs, where each pair contains the starting position and the distance to move.
+         */
+        std::vector<std::pair<int, int>> validMovesPlayer2() const;
+
+        Board stepReturn(int from, int distance) const {
+            Board newBoard(*this); // Create a copy of the current board
+            newBoard.move(from, distance); // Move the piece on the copied board
+            return newBoard; // Return the new board state
+        }
 
 
         /**
@@ -172,20 +199,25 @@ class Board {
         ///////////////////////////////////////////////////
         ///// PRIVATE METHODS FOR VALID MOVES /////////////
         ///////////////////////////////////////////////////
-        
-        /**
-         * @brief Returns all valid moves for player 1.
-         * This method checks player 1's pieces and the rolled dice to determine all possible moves.
-         * @return A vector of pairs, where each pair contains the starting position and the distance to move.
-         */
-        std::vector<std::pair<int, int>> validMovesPlayer1() const;
 
         /**
-         * @brief Returns all valid moves for player 2.
+         * @brief Returns all valid moves for player 1 using a depth-first search approach.
+         * This method checks player 1's pieces and the rolled dice to determine all possible moves.
+         * This method is used to explore all possible moves for player 1 and make sure it only returns moves
+         * that are valid according to the game rules (using moves that allow the maximum amount of dice to be used).
+         * @return A vector of pairs, where each pair contains the starting position and the distance to move. 
+         */
+        std::vector<std::pair<int, int>> validMovesDFS1() const;
+
+        /**
+         * @brief Returns all valid moves for player 2 using a depth-first search approach.
          * This method checks player 2's pieces and the rolled dice to determine all possible moves.
+         * This method is used to explore all possible moves for player 2 and make sure it only returns moves
+         * that are valid according to the game rules (using moves that allow the maximum amount of dice to be used).
          * @return A vector of pairs, where each pair contains the starting position and the distance to move.
          */
-        std::vector<std::pair<int, int>> validMovesPlayer2() const;
+        std::vector<std::pair<int, int>> validMovesDFS2() const;
+
 
 
         /**
