@@ -6,6 +6,7 @@ class BoardFixture : public ::testing::Test {
 protected:
     Board board;
     Board barBoard; // Board with pieces on the bar for testing
+    Board barBoardComplex; // Board with complex bar state for testing
     Board bearingOffBoard; // Board with pieces ready for bearing off
     
     void SetUp() override {
@@ -16,6 +17,10 @@ protected:
                             1, 0, -1, -1, -1, -1, 1}; // Player 1 has piece on the bar
 
         barBoard = Board(barState); // Initialize the board with pieces on the bar
+        int barStateComplex[31] = {-2, 0, -1, 2, -4, 1, 0, 0, 0, 0, 0, 5, 
+                                   0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 1, 
+                                   1, 0, -1, -1, -1, -1, 1}; 
+        barBoardComplex = Board(barStateComplex); 
     }
     
     // Helper methods to manipulate internal board state
@@ -36,6 +41,15 @@ protected:
         if (face1 > 0 && face1 <= 6) barBoard.dice[face1-1]++;
         if (face2 > 0 && face2 <= 6) barBoard.dice[face2-1]++;
     }
+
+    void setDiceBarComplex(int face1, int face2) {
+        // Clear existing dice for the complex bar board
+        std::fill(std::begin(barBoardComplex.dice), std::end(barBoardComplex.dice), 0);
+        
+        // Set the specific dice values for the complex bar board
+        if (face1 > 0 && face1 <= 6) barBoardComplex.dice[face1-1]++;
+        if (face2 > 0 && face2 <= 6) barBoardComplex.dice[face2-1]++;
+    }
     
     void setCurrentPlayer(int player) {
         board.currentPlayer = player;
@@ -43,6 +57,10 @@ protected:
 
     void setCurrentPlayerBar(int player) {
         barBoard.currentPlayer = player; // Set the current player for the bar board
+    }
+
+    void setCurrentPlayerBarComplex(int player) {
+        barBoardComplex.currentPlayer = player; // Set the current player for the complex bar board
     }
     
     void placePiece(int player, int position, int count) {
@@ -58,6 +76,14 @@ protected:
             board.bar1 = count;
         } else if (player == -1 || player == 2) {
             board.bar2 = count;
+        }
+    }
+
+    void setBarBar(int player, int count) {
+        if (player == 1) {
+            barBoard.bar1 = count; // Set the number of pieces on the bar for player 1 in barBoard
+        } else if (player == -1 || player == 2) {
+            barBoard.bar2 = count; // Set the number of pieces on the bar for player 2 in barBoard
         }
     }
 
@@ -99,6 +125,14 @@ protected:
 
     uint8_t getBarBar2() const {
         return barBoard.getBar2(); // Get the number of pieces on the bar for player 2 in barBoard
+    }
+
+    uint8_t getBarComplex1() const {
+        return barBoardComplex.getBar1(); // Get the number of pieces on the bar for player 1 in complex barBoard
+    }
+
+    uint8_t getBarComplex2() const {
+        return barBoardComplex.getBar2(); // Get the number of pieces on the bar for player 2 in complex barBoard
     }
 
     uint8_t* getPlayer1Board() {
@@ -329,14 +363,9 @@ TEST_F(BoardFixture, TestStepPlayer2) {
 TEST_F(BoardFixture, TestBarPlayer1) {
     setCurrentPlayerBar(1);
     setDiceBar(1, 2); 
-    std::cout << "Bar for player 1: " << (int)getBarBar1() << std::endl;
     EXPECT_EQ(getBarBar1(), 1) << "Player 1 should have 1 piece on the bar.";
     EXPECT_EQ(getBarBar2(), 0) << "Player 2 should have no pieces on the bar.";
     auto moves = barBoard.validMoves();
-    std::cout << "Valid moves for Player 1 from bar: ";
-    for (const auto& move : moves) {
-        std::cout << "(" << move.first << ", " << move.second << ") ";
-    }
     std::cout << std::endl;
     EXPECT_FALSE(moves.empty()); 
     EXPECT_EQ(moves.size(), 2);
@@ -366,6 +395,46 @@ TEST_F(BoardFixture, TestBarPlayer1) {
     EXPECT_EQ(moves.size(), 2); 
     expected_moves = {
         {4, 7}, {5, 7}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+TEST_F(BoardFixture, TestBarPlayer2) {
+    setDiceBar(1, 2); // Set dice to 1 and 2
+    setCurrentPlayerBar(-1); // Set current player to Player 2
+    setBarBar(-1, 1); // Player 2 has 1 piece on the bar (otherwise no valid moves)
+    auto moves = barBoard.validMoves();
+    EXPECT_FALSE(moves.empty()); // There should be valid moves available for Player 2
+    EXPECT_EQ(moves.size(), 2); // There should be 2 valid moves for Player 2 with dice 1 and 2
+    std::vector<std::pair<int, int>> expected_moves = {
+        {23, 7}, {22, 7}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+    setDiceBar(3, 4); // Set dice to 3 and 4
+    setCurrentPlayerBar(-1); // Set current player to Player 2
+    moves = barBoard.validMoves();
+    EXPECT_FALSE(moves.empty()); 
+    EXPECT_EQ(moves.size(), 2); 
+    expected_moves = {
+        {21, 7}, {20, 7}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+    setDiceBar(5, 6); // Set dice to 5 and 6
+    setCurrentPlayerBar(-1); // Set current player to Player 2
+    moves = barBoard.validMoves();
+    EXPECT_FALSE(moves.empty()); // There should be valid moves available for Player 2
+    EXPECT_EQ(moves.size(), 1) << "Moves should be 1"; // Player1 blocking 6th position
+    expected_moves = {
+        {19, 7}
     };
     for (const auto& move : expected_moves) {
         EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())

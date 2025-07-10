@@ -248,7 +248,7 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer2() const {
         for (int i = 0; i < 6; ++i) {
             if (dice[i] > 0) { // Check if the die is valid
                 int targetPosition = 23 - i; // Calculate target position based on the die rolled
-                if (player2[targetPosition] <= 1) {
+                if (player1[targetPosition] <= 1) {
                     moves.emplace_back(targetPosition, 7); // Move from bar to target position (7 signifies emplacement move)
                 }
             }
