@@ -33,12 +33,14 @@ class Board {
          * @brief Create a new Board object from a character array.
          * This constructor initializes the board from a character array representing the board state.
          * @param boardState An integer array representing the board state. 
-         * Size of the array is 26 (24 positions + 2 bars).
+         * Size of the array is 31 (24 positions + 2 bars + 4 dice + current player).
          * The first 24 elements represent the positions on the board,
          * the 25th element represents the bar for player 1,
          * and the 26th element represents the bar for player 2.
+         * 27th - 30th elements are for dice.
+         * 31st element is the current player. 
          */
-        Board(const int boardState[26]);
+        Board(const int boardState[31]);
         
 
         /**

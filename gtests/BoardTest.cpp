@@ -5,10 +5,17 @@
 class BoardFixture : public ::testing::Test {
 protected:
     Board board;
+    Board barBoard; // Board with pieces on the bar for testing
+    Board bearingOffBoard; // Board with pieces ready for bearing off
     
     void SetUp() override {
         // Default setup is handled by Board constructor
         board = Board(); // Reset the board to its initial state
+        int barState[31] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 
+                            0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 1, 
+                            1, 0, -1, -1, -1, -1, 1}; // Player 1 has piece on the bar
+
+        barBoard = Board(barState); // Initialize the board with pieces on the bar
     }
     
     // Helper methods to manipulate internal board state
@@ -20,9 +27,22 @@ protected:
         if (face1 > 0 && face1 <= 6) board.dice[face1-1]++;
         if (face2 > 0 && face2 <= 6) board.dice[face2-1]++;
     }
+
+    void setDiceBar(int face1, int face2) {
+        // Clear existing dice for the bar board
+        std::fill(std::begin(barBoard.dice), std::end(barBoard.dice), 0);
+        
+        // Set the specific dice values for the bar board
+        if (face1 > 0 && face1 <= 6) barBoard.dice[face1-1]++;
+        if (face2 > 0 && face2 <= 6) barBoard.dice[face2-1]++;
+    }
     
     void setCurrentPlayer(int player) {
         board.currentPlayer = player;
+    }
+
+    void setCurrentPlayerBar(int player) {
+        barBoard.currentPlayer = player; // Set the current player for the bar board
     }
     
     void placePiece(int player, int position, int count) {
@@ -68,8 +88,17 @@ protected:
     uint8_t getBar1() const {
         return board.getBar1(); // Get the number of pieces on the bar for player 1
     }
+
     uint8_t getBar2() const {
         return board.getBar2(); // Get the number of pieces on the bar for player 2
+    }
+
+    uint8_t getBarBar1() const {
+        return barBoard.getBar1(); // Get the number of pieces on the bar for player 1 in barBoard
+    }
+
+    uint8_t getBarBar2() const {
+        return barBoard.getBar2(); // Get the number of pieces on the bar for player 2 in barBoard
     }
 
     uint8_t* getPlayer1Board() {
@@ -204,80 +233,80 @@ TEST_F(BoardFixture, ValidMovesPlayer2) {
 }
 
 TEST_F(BoardFixture, TestMovePlayer1) {
-    setCurrentPlayer(1); // Set current player to Player 1
-    setDice(1, 2); // Set dice to 1 and 2
-    board.move(0, 1); // Move from position 0 to position 1
-    EXPECT_EQ(getPlayer1Board()[0], 1); // Player 1 should have 1 piece left on position 0
-    EXPECT_EQ(getPlayer1Board()[1], 1); // Player 1 should have 1 piece on position 1
-    EXPECT_EQ(getPlayer2Board()[0], 0); // Player 2 should have no pieces on position 0
-    EXPECT_EQ(getPlayer2Board()[1], 0); // Player 2 should have no pieces on position 1
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar   
-    EXPECT_TRUE(diceAvailable(2)); // Die 2 should be available
-    EXPECT_FALSE(diceAvailable(1)); // Die 1 should not be available (just used)
-    EXPECT_EQ(getCurrentPlayer(), 1); // Current player should still be Player 1
-    board.move(0, 2); // Move from position 0 to position 2
-    EXPECT_EQ(getPlayer1Board()[0], 0); // Player 1 should have no pieces left on position 0
-    EXPECT_EQ(getPlayer1Board()[2], 1); // Player 1 should have 1 piece on position 2
-    EXPECT_EQ(getPlayer2Board()[0], 0); // Player 2 should have no pieces on position 0
-    EXPECT_EQ(getPlayer2Board()[2], 0); // Player 2 should have no pieces on position 2
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar
-    EXPECT_FALSE(diceAvailable(1)); // Die 1 should not be available (just used)
-    EXPECT_FALSE(diceAvailable(2)); // Die 2 should not be available (just used)
+    setCurrentPlayer(1); 
+    setDice(1, 2);  
+    board.move(0, 1);  
+    EXPECT_EQ(getPlayer1Board()[0], 1);  
+    EXPECT_EQ(getPlayer1Board()[1], 1);  
+    EXPECT_EQ(getPlayer2Board()[0], 0);  
+    EXPECT_EQ(getPlayer2Board()[1], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_TRUE(diceAvailable(2));  
+    EXPECT_FALSE(diceAvailable(1));  
+    EXPECT_EQ(getCurrentPlayer(), 1);  
+    board.move(0, 2);  
+    EXPECT_EQ(getPlayer1Board()[0], 0);  
+    EXPECT_EQ(getPlayer1Board()[2], 1);  
+    EXPECT_EQ(getPlayer2Board()[0], 0);  
+    EXPECT_EQ(getPlayer2Board()[2], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_FALSE(diceAvailable(1));  
+    EXPECT_FALSE(diceAvailable(2));  
 }
 
 TEST_F(BoardFixture, TestMovePlayer2) {
-    setCurrentPlayer(-1);  // Set current player to Player 2
-    setDice(1, 2); // Set dice to 1 and 2
-    board.move(23, -1); // Move from position 23 to position 22
-    EXPECT_EQ(getPlayer2Board()[23], 1); // Player 2 should have 1 piece left on position 23
-    EXPECT_EQ(getPlayer2Board()[22], 1); // Player 2 should have 1 piece on position 22
-    EXPECT_EQ(getPlayer1Board()[23], 0); // Player 1 should have no pieces on position 23
-    EXPECT_EQ(getPlayer1Board()[22], 0); // Player 1 should have no pieces on position 22
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar
-    EXPECT_TRUE(diceAvailable(2)); // Die 2 should be available
-    EXPECT_FALSE(diceAvailable(1)); // Die 1 should not be available (just used)
-    EXPECT_EQ(getCurrentPlayer(), -1); // Current player should still be Player 2
-    board.move(23, -2); // Move from position 23 to position 21
-    EXPECT_EQ(getPlayer2Board()[23], 0); // Player 2 should have no pieces left on position 23
-    EXPECT_EQ(getPlayer2Board()[21], 1); // Player 2 should have 1 piece on position 21
-    EXPECT_EQ(getPlayer1Board()[23], 0); // Player 1 should have no pieces on position 23
-    EXPECT_EQ(getPlayer1Board()[21], 0); // Player 1 should have no pieces on position 21
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar
-    EXPECT_FALSE(diceAvailable(1)); // Die 1 should not be available (just used)
-    EXPECT_FALSE(diceAvailable(2)); // Die 2 should not be available (just used)
+    setCurrentPlayer(-1);   
+    setDice(1, 2);  
+    board.move(23, -1);  
+    EXPECT_EQ(getPlayer2Board()[23], 1);  
+    EXPECT_EQ(getPlayer2Board()[22], 1);  
+    EXPECT_EQ(getPlayer1Board()[23], 0);  
+    EXPECT_EQ(getPlayer1Board()[22], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_TRUE(diceAvailable(2));  
+    EXPECT_FALSE(diceAvailable(1));  
+    EXPECT_EQ(getCurrentPlayer(), -1);  
+    board.move(23, -2);  
+    EXPECT_EQ(getPlayer2Board()[23], 0);  
+    EXPECT_EQ(getPlayer2Board()[21], 1);  
+    EXPECT_EQ(getPlayer1Board()[23], 0);  
+    EXPECT_EQ(getPlayer1Board()[21], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_FALSE(diceAvailable(1));  
+    EXPECT_FALSE(diceAvailable(2));  
 }
 
 TEST_F(BoardFixture, TestStepPlayer1) {
-    setCurrentPlayer(1); // Set current player to Player 1
-    setDice(1, 2); // Set dice to 1 and 2
-    board.step(0, 1); // Step from position 0 to position 1
-    EXPECT_EQ(getPlayer1Board()[0], 1); // Player 1 should have 1 piece left on position 0
-    EXPECT_EQ(getPlayer1Board()[1], 1); // Player 1 should have 1 piece on position 1
-    EXPECT_EQ(getPlayer2Board()[0], 0); // Player 2 should have no pieces on position 0
-    EXPECT_EQ(getPlayer2Board()[1], 0); // Player 2 should have no pieces on position 1
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar   
-    EXPECT_TRUE(diceAvailable(2)); // Die 2 should be available
-    EXPECT_FALSE(diceAvailable(1)); // Die 1 should not be available (just used)
-    EXPECT_EQ(getCurrentPlayer(), 1); // Current player should still be Player 1
-    board.step(0, 2); // Step from position 0 to position 2 (using the second die)
-    EXPECT_EQ(getPlayer1Board()[0], 0); // Player 1 should have no pieces left on position 0
-    EXPECT_EQ(getPlayer1Board()[2], 1); // Player 1 should have 1 piece on position 2
-    EXPECT_EQ(getPlayer2Board()[0], 0); // Player 2 should have no pieces on position 0
-    EXPECT_EQ(getPlayer2Board()[2], 0); // Player 2 should have no pieces on position 2
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar
-    EXPECT_EQ(getCurrentPlayer(), -1); // Current player should switch to Player 2 after using both dice
+    setCurrentPlayer(1);  
+    setDice(1, 2);  
+    board.step(0, 1);  
+    EXPECT_EQ(getPlayer1Board()[0], 1);  
+    EXPECT_EQ(getPlayer1Board()[1], 1);  
+    EXPECT_EQ(getPlayer2Board()[0], 0);  
+    EXPECT_EQ(getPlayer2Board()[1], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_TRUE(diceAvailable(2));  
+    EXPECT_FALSE(diceAvailable(1));  
+    EXPECT_EQ(getCurrentPlayer(), 1);  
+    board.step(0, 2);  
+    EXPECT_EQ(getPlayer1Board()[0], 0);  
+    EXPECT_EQ(getPlayer1Board()[2], 1);  
+    EXPECT_EQ(getPlayer2Board()[0], 0);  
+    EXPECT_EQ(getPlayer2Board()[2], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_EQ(getCurrentPlayer(), -1);  
 }
 
 TEST_F(BoardFixture, TestStepPlayer2) {
-    setCurrentPlayer(-1); // Set current player to Player 2
-    setDice(1, 2); // Set dice to 1 and 2
-    board.step(23, -1); // Step from position 23 to position 22
+    setCurrentPlayer(-1);  
+    setDice(1, 2);  
+    board.step(23, -1);  
     EXPECT_EQ(getPlayer2Board()[23], 1); 
     EXPECT_EQ(getPlayer2Board()[22], 1); 
     EXPECT_EQ(getPlayer1Board()[23], 0); 
@@ -285,17 +314,66 @@ TEST_F(BoardFixture, TestStepPlayer2) {
     EXPECT_EQ(getBar1(), 0); 
     EXPECT_EQ(getBar2(), 0);
     EXPECT_TRUE(diceAvailable(2)); 
-    EXPECT_FALSE(diceAvailable(1)); // Die 1 should not be available (just used)
+    EXPECT_FALSE(diceAvailable(1));  
     EXPECT_EQ(getCurrentPlayer(), -1); 
-    board.step(23, -2); // Step from position 23 to position 21 (using the second die)
-    EXPECT_EQ(getPlayer2Board()[23], 0); // Player 2 should have no pieces left on position 23
-    EXPECT_EQ(getPlayer2Board()[21], 1); // Player 2 should have 1 piece on position 21
-    EXPECT_EQ(getPlayer1Board()[23], 0); // Player 1 should have no pieces on position 23
-    EXPECT_EQ(getPlayer1Board()[21], 0); // Player 1 should have no pieces on position 21
-    EXPECT_EQ(getBar1(), 0); // Player 1 should have no pieces on the bar
-    EXPECT_EQ(getBar2(), 0); // Player 2 should have no pieces on the bar
-    EXPECT_EQ(getCurrentPlayer(), 1); // Current player should switch to Player 1 after using both dice
+    board.step(23, -2);  
+    EXPECT_EQ(getPlayer2Board()[23], 0);  
+    EXPECT_EQ(getPlayer2Board()[21], 1);  
+    EXPECT_EQ(getPlayer1Board()[23], 0);  
+    EXPECT_EQ(getPlayer1Board()[21], 0);  
+    EXPECT_EQ(getBar1(), 0);  
+    EXPECT_EQ(getBar2(), 0);  
+    EXPECT_EQ(getCurrentPlayer(), 1);  
 }
+
+TEST_F(BoardFixture, TestBarPlayer1) {
+    setCurrentPlayerBar(1);
+    setDiceBar(1, 2); 
+    std::cout << "Bar for player 1: " << (int)getBarBar1() << std::endl;
+    EXPECT_EQ(getBarBar1(), 1) << "Player 1 should have 1 piece on the bar.";
+    EXPECT_EQ(getBarBar2(), 0) << "Player 2 should have no pieces on the bar.";
+    auto moves = barBoard.validMoves();
+    std::cout << "Valid moves for Player 1 from bar: ";
+    for (const auto& move : moves) {
+        std::cout << "(" << move.first << ", " << move.second << ") ";
+    }
+    std::cout << std::endl;
+    EXPECT_FALSE(moves.empty()); 
+    EXPECT_EQ(moves.size(), 2);
+    std::vector<std::pair<int, int>> expected_moves = {
+        {0, 7}, {1, 7}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+    setDiceBar(3, 4);
+    setCurrentPlayerBar(1); 
+    moves = barBoard.validMoves();
+    EXPECT_FALSE(moves.empty());
+    EXPECT_EQ(moves.size(), 2); 
+    expected_moves = {
+        {2, 7}, {3, 7}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+    setDiceBar(5, 6);
+    setCurrentPlayerBar(1);
+    moves = barBoard.validMoves();
+    EXPECT_FALSE(moves.empty());
+    EXPECT_EQ(moves.size(), 2); 
+    expected_moves = {
+        {4, 7}, {5, 7}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+
 
 
 int main(int argc, char **argv) {

@@ -14,22 +14,27 @@ Board::Board() {
     std::srand(static_cast<unsigned int>(std::time(nullptr))); // Seed the random number generator
 }
 
-Board::Board(const int boardState[26]) {
+Board::Board(const int boardState[31]) {
     // Initialize player positions from the provided board state
     for (int i = 0; i < 24; ++i) {
         if (boardState[i] < 0) {
             player1[i] = 0; 
-            player2[i] = -boardState[i]; 
+            player2[i] = (uint8_t)(-boardState[i]); 
         } else {
-            player1[i] = boardState[i]; // Player 1's pieces
+            player1[i] = (uint8_t)(boardState[i]); // Player 1's pieces
             player2[i] = 0; // Player 2 has no pieces on this position
         }
     }
+    bar1 = (uint8_t)boardState[24]; // Number of pieces on the bar for player 1
+    bar2 = (uint8_t)boardState[25]; // Number of pieces on the bar for player 2
     // Initialize dice and current player
     std::fill(std::begin(dice), std::end(dice), 0);
-    currentPlayer = 1; // Default to player 1
-    bar1 = boardState[24]; // Number of pieces on the bar for player 1
-    bar2 = boardState[25]; // Number of pieces on the bar for player 2
+    for (int i = 26; i < 30; ++i) {
+        if (boardState[i] != -1) {
+            dice[boardState[i] - 1] += 1; // Increment the count for the rolled die
+        }
+    }
+    currentPlayer = boardState[30]; // Set the current player
 }
 
 Board::~Board() {
@@ -41,6 +46,8 @@ Board::Board(const Board& other) {
     std::memcpy(this->player1, other.player1, sizeof(this->player1));
     std::memcpy(this->player2, other.player2, sizeof(this->player2));
     std::memcpy(this->dice, other.dice, sizeof(this->dice));
+    this->bar1 = other.bar1;
+    this->bar2 = other.bar2;
     this->currentPlayer = other.currentPlayer;
 }
 
@@ -50,6 +57,8 @@ Board& Board::operator=(const Board& other) {
         std::memcpy(this->player1, other.player1, sizeof(this->player1));
         std::memcpy(this->player2, other.player2, sizeof(this->player2));
         std::memcpy(this->dice, other.dice, sizeof(this->dice));
+        this->bar1 = other.bar1;
+        this->bar2 = other.bar2;
         this->currentPlayer = other.currentPlayer;
     }
     return *this;
@@ -151,23 +160,6 @@ std::vector<std::pair<int, int>> Board::validMoves() const {
 std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
     std::vector<std::pair<int, int>> moves;
 
-    /*
-    1. Check if player 1 has pieces on the bar. 
-    If so, they must move a piece from the bar to the board.
-
-    2. Check each piece on the board for valid moves based on the current dice. 
-    - If player 1 has pieces on the bar, they can only move a piece from the bar. 
-    - If player 1 has no pieces on the bar, they can move any piece on the board.
-    - A player must move a piece to an open point (a point that is either empty, occupied by their own pieces, or occupied by a single opponent's piece).
-    - A player must choose moves that will use the maxiumum amount of die. 
-    - If a player can only use one die, they must use it if it results in a valid move. 
-    - If using one die results in the other die being invalid for both the die, the player must use the larger die. 
-    - A player can only bear off pieces if all of their pieces are in their home board 
-    - If a player can bear off and there is a piece in the position of the dice roll, they must bear off that piece. 
-    - If a player can bear off and there is no piece in the position of the dice roll, they must move pieces that are higher in position.
-        If there are no pieces higher in position, they can bear off any piece in their home board. 
-    */
-
     // Check if player 1 has pieces on the bar (must place a piece from the bar)
     if (bar1 > 0) {
         for (int i = 0; i < 6; ++i) {
@@ -182,9 +174,8 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
     }
 
     // Check for bearing off 
-    // TODO : Implement bearing off logic
-    // If all pieces are in the home board, from position 0 to 17 are zero
-    if (std::all_of(player1, player1 + 17, [](uint8_t p) { return p == 0; })) {
+    // If all pieces are in the home board, from position 0 to 17 inclusive are zero
+    if (std::all_of(player1, player1 + 18, [](uint8_t p) { return p == 0; })) {
         for (int i = 0; i < 6; ++i) {
             if (dice[i] > 0) { // Check if the die is valid
                 int targetPosition = 23 - i; // Calculate target position for bearing off
@@ -345,7 +336,7 @@ void Board::handlePlayer2Move(int from, int distance) {
         player1[targetPosition] = 0;
         bar1++; // If there was an opponent's piece, move it to the bar
     }
-    dice[-distance - 1]--; // Mark the die as used (negative index for player 2)
+    dice[(-distance) - 1]--; // Mark the die as used (negative index for player 2)
 }
 
 bool Board::isGameOver() const {

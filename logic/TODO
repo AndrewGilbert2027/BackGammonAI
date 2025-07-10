@@ -1,4 +1,5 @@
-1. Finish the array constructor to be used for testing and easy setup of custom game positions for testing. 
+1. Finish the array constructor to be used for testing and easy setup of custom game positions for testing. DONE
+
 2. Finish testing bar positions, bear off positions, regular positions, etc. 
 3. Finish final validMoves function that takes into account the nuance of choosing moves that use the most amount of dice. (DFS) 
 4. Implement function that returns the current winner for that board or some null character if game is continuing. 
