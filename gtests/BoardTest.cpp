@@ -8,6 +8,7 @@ protected:
     Board barBoard; // Board with pieces on the bar for testing
     Board barBoardComplex; // Board with complex bar state for testing
     Board bearingOffBoard; // Board with pieces ready for bearing off
+    Board bearingOffComplex; // Board with complex bearing off state for testing
     
     void SetUp() override {
         // Default setup is handled by Board constructor
@@ -26,6 +27,12 @@ protected:
                                    0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 1, 
                                    0, 0, -1, -1, -1, -1, 1}; // Player ready to bear off
         bearingOffBoard = Board(bearingOffState); // Initialize the board with pieces ready for bearing off
+
+        int bearOffComplex[31] = {-2, 0, 2, 2, -4, 1, 0, 0, 0, 0, 0, 0,
+                                   0, 0, 0, 0, 3, 0, 5, 0, 4, 3, 0, 1, 
+                                   0, 0, -1, -1, -1, -1, 1}; // Complex bearing off state
+        bearingOffComplex = Board(bearOffComplex); // Initialize the board with complex bearing off state
+    
     }
     
     // Helper methods to manipulate internal board state
@@ -64,6 +71,15 @@ protected:
         if (face1 > 0 && face1 <= 6) bearingOffBoard.dice[face1-1]++;
         if (face2 > 0 && face2 <= 6) bearingOffBoard.dice[face2-1]++;
     }
+
+    void setDiceBearOffComplex(int face1, int face2) {
+        // Clear existing dice for the complex bearing off board
+        std::fill(std::begin(bearingOffComplex.dice), std::end(bearingOffComplex.dice), 0);
+        
+        // Set the specific dice values for the complex bearing off board
+        if (face1 > 0 && face1 <= 6) bearingOffComplex.dice[face1-1]++;
+        if (face2 > 0 && face2 <= 6) bearingOffComplex.dice[face2-1]++;
+    }
     
     void setCurrentPlayer(int player) {
         board.currentPlayer = player;
@@ -81,6 +97,10 @@ protected:
         bearingOffBoard.currentPlayer = player; // Set the current player for the bearing off board
     }
     
+    void setCurrentPlayerBearOffComplex(int player) {
+        bearingOffComplex.currentPlayer = player; // Set the current player for the complex bearing off board
+    }
+
     void placePiece(int player, int position, int count) {
         if (player == 1) {
             board.player1[position] = count;
@@ -110,6 +130,14 @@ protected:
             barBoardComplex.bar1 = count; // Set the number of pieces on the bar for player 1 in complex barBoard
         } else if (player == -1 || player == 2) {
             barBoardComplex.bar2 = count; // Set the number of pieces on the bar for player 2 in complex barBoard
+        }
+    }
+
+    void setBarBearOffComplex(int player, int count) {
+        if (player == 1) {
+            bearingOffComplex.bar1 = count; // Set the number of pieces on the bar for player 1 in complex bearing off board
+        } else if (player == -1 || player == 2) {
+            bearingOffComplex.bar2 = count; // Set the number of pieces on the bar for player 2 in complex bearing off board
         }
     }
 
@@ -618,6 +646,52 @@ TEST_F(BoardFixture, TestBearingOffPlayer2) {
     expected_moves = {
         {3, -5}, {3, -6} // Must bear off from the highest position available
     }; 
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+TEST_F(BoardFixture, TestBearingOffComplex2) {
+    setCurrentPlayerBearOffComplex(-1); // Set current player to Player 2
+    setDiceBearOffComplex(1, 2); // Set dice to 1 and 2
+    EXPECT_EQ(bearingOffComplex.getBar1(), 0) << "Player 1 should have no pieces on the bar.";
+    EXPECT_EQ(bearingOffComplex.getBar2(), 0) << "Player 2 should have no pieces on the bar.";
+    auto moves = bearingOffComplex.validMoves(); 
+    EXPECT_FALSE(moves.empty()) << "There should be valid moves available for Player 2";
+    EXPECT_EQ(moves.size(), 2) << "Number of valid moves should be 1";
+    std::cout << "Valid moves for Player 2: ";
+    for (const auto& move : moves) {
+        std::cout << "{" << move.first << ", " << move.second << "} ";
+    }
+    std::cout << std::endl;
+    std::vector<std::pair<int, int>> expected_moves = {
+        {0, -1}, {0, -2} // The checker in position 5 cannot be used (blocked)
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+    setDiceBearOffComplex(3, 4); // Set dice to 3 and 4
+    setCurrentPlayerBearOffComplex(-1); // Set current player to Player 2
+    moves = bearingOffComplex.validMoves();
+    EXPECT_FALSE(moves.empty()); // There should be valid moves available for Player 2
+    EXPECT_EQ(moves.size(), 2) << "There should be 2 valid moves";
+    expected_moves = {
+        {4, -3}, {4, -4} // Player 2 can bear off from position 0
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+    setDiceBearOffComplex(5, 6); // Set dice to 5 and 6
+    setCurrentPlayerBearOffComplex(-1); // Set current player to Player 2
+    moves = bearingOffComplex.validMoves();
+    EXPECT_FALSE(moves.empty()); // There should be valid moves available for Player 2
+    EXPECT_EQ(moves.size(), 2) << "There should be 2 valid moves";
+    expected_moves = {
+        {4, -5}, {4, -6} // Player 2 can bear off from position 0
+    };
     for (const auto& move : expected_moves) {
         EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
             << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
