@@ -184,7 +184,7 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
                 } else {
                     // Check to see if there are any pieces higher than the target position that can be beared off
                     bool higherPieceFound = false;
-                    for (int j = 23 - i - 1; j >= 17; --j) {
+                    for (int j = targetPosition - 1; j >= 18; --j) {
                         if (player1[j] > 0 && player2[j + i + 1] <= 1) {
                             moves.emplace_back(j, i + 1); // Move a piece from a higher position
                             higherPieceFound = true;
@@ -193,9 +193,9 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
                     if (!higherPieceFound) {
                         // If no higher pieces found, bear off the next available lower piece 
                         for (int j = targetPosition + 1; j < 24; ++j) {
-                            if (player1[targetPosition] > 0) {
+                            if (player1[j] > 0) {
                                 moves.emplace_back(j, i + 1); // Bear off next available piece
-                                break; // Can only bear off next available piece
+                                break; // Exit loop after finding piece to bear off. 
                             }
                         }
                     }
@@ -267,7 +267,7 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer2() const {
                 } else {
                     // Check to see if there are any pieces higher than the target position that can be moved
                     bool higherPieceFound = false;
-                    for (int j = i + 1; j <= 5; --j) {
+                    for (int j = i + 1; j <= 5; ++j) {
                         if (player2[j] > 0 && player1[j - (i + 1)] <= 1) {
                             moves.emplace_back(j, - (i + 1)); // Move a piece from a higher position
                             higherPieceFound = true;
@@ -276,9 +276,9 @@ std::vector<std::pair<int, int>> Board::validMovesPlayer2() const {
                     if (!higherPieceFound) {
                         // If no higher pieces found, bear off the next available lower piece 
                         for (int j = targetPosition - 1; j >= 0; --j) {
-                            if (player2[targetPosition] > 0) {
+                            if (player2[j] > 0) {
                                 moves.emplace_back(j, - (i + 1)); // Bear off next available piece
-                                break; // Can only bear off next available piece
+                                break; // Exit the loop after finding a piece to bear off
                             }
                         }
                     }
