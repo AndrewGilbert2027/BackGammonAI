@@ -13,7 +13,7 @@ protected:
     void SetUp() override {
         // Default setup is handled by Board constructor
         board = Board(); // Reset the board to its initial state
-        int barState[31] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 
+        int barState[31] = {0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 5, 
                             0, 0, 0, 0, 3, 0, 5, 0, 0, 0, 0, 1, 
                             1, 0, -1, -1, -1, -1, 1}; // Player 1 has piece on the bar
 
@@ -698,6 +698,139 @@ TEST_F(BoardFixture, TestBearingOffComplex2) {
     }
 }
 
+TEST(DFS_Test, TestMostAmountOfDieUsed1) {
+    int init_board[31] = {0, 0, 0, 0, 1, 0, 0, -2, 1, -2, 0, 0, 
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                          0, 0, 1, 2, -1, -1, 1};
+    Board b(init_board);
+
+    auto moves = b.validMoves();
+    EXPECT_FALSE(moves.empty()) << "There should be valid moves available";
+    EXPECT_EQ(moves.size(), 2) << "There should be 2 valid moves";
+    std::vector<std::pair<int, int>> expected_moves = {
+        {4, 1}, {8, 2}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+TEST(DFS_Test, TestMostAmountOfDieUsed2) {
+    int init_board[31] = {0, 0, 0, 0, 2, -1, 2, 0, 0, -1, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 1, 2, -1, -1, -1};
+    Board b(init_board);
+    auto moves = b.validMoves();
+    EXPECT_FALSE(moves.empty()) << "There should be valid moves available";
+    EXPECT_EQ(moves.size(), 2) << "There should be 2 valid moves";
+    std::vector<std::pair<int, int>> expected_moves = {
+        {5, -2}, {9, -1}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+TEST(DFS_Test, MaxDiceUsedIfTieBreak1) {
+    int init_board[31] = {0, 0, 0, 0, 1, 0, 0, 0, 0, -2, 0, -2,
+                          -2, -2, -2, -2, -2, -2, 0, 0, 0, 0, 0, 0,
+                          0, 0, 4, 6, -1, -1, 1};
+
+    // Even though the minimum amount of die left is 1 for both moves, we must choose the maximum die used. 
+    Board b(init_board);
+    auto moves = b.validMoves();
+    EXPECT_FALSE(moves.empty()) << "There should be valid moves available";
+    EXPECT_EQ(moves.size(), 1) << "There should be 1 valid moves";
+    std::vector<std::pair<int, int>> expected_moves = {
+        {4, 6}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+TEST(DFS_Test, MaxDiceUsedIfTieBreak2) {
+    int init_board[31] = {0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0,
+                         0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0,
+                          0, 0, 4, 6, -1, -1, -1};
+    Board b(init_board);
+    auto moves = b.validMoves();
+    EXPECT_FALSE(moves.empty()) << "There should be valid moves available";
+    EXPECT_EQ(moves.size(), 1) << "There should be 1 valid moves";
+    std::vector<std::pair<int, int>> expected_moves = {
+        {17, -6}
+    };
+    for (const auto& move : expected_moves) {
+        EXPECT_TRUE(std::find(moves.begin(), moves.end(), move) != moves.end())
+            << "Expected move " << move.first << ", " << move.second << " not found in valid moves.";
+    }
+}
+
+TEST_F(BoardFixture, TestGetOutcomeContinue) {
+    int outcome = board.getOutcome();
+    EXPECT_EQ(outcome, 0) << "Initial outcome should be 0 (no winner yet)";
+
+    outcome = bearingOffBoard.getOutcome();
+    EXPECT_EQ(outcome, 0) << "Initial outcome for bearing off board should be 0 (no winner yet)";
+
+    outcome = barBoard.getOutcome();
+    EXPECT_EQ(outcome, 0) << "Initial outcome for bar board should be 0 (no winner yet)";
+
+    outcome = barBoardComplex.getOutcome();
+    EXPECT_EQ(outcome, 0) << "Initial outcome for complex bar board should be 0 (no winner yet)";
+
+    outcome = bearingOffComplex.getOutcome();
+    EXPECT_EQ(outcome, 0) << "Initial outcome for complex bearing off board should be 0 (no winner yet)";
+}
+
+TEST(OutcomeTest, TestPlayer2Wins) {
+    int init_board[31] = {0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 4, 6, -1, -1, -1};
+    Board b(init_board);
+    int outcome = b.getOutcome();
+    EXPECT_EQ(outcome, -1) << "Player 2 should win with the given board state.";
+
+    int gammon_board[31] = {0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 6, -1, -1, -1};
+    Board gammon_b(gammon_board);
+    int gammon_outcome = gammon_b.getOutcome();
+    EXPECT_EQ(gammon_outcome, -2) << "Player 2 should win with a gammon with the given board state.";
+
+    int backgammon_board[31] = {0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 6, -1, -1, -1};
+    Board backgammon_b(backgammon_board);
+    int backgammon_outcome = backgammon_b.getOutcome();
+    EXPECT_EQ(backgammon_outcome, -3) << "Player 2 should win with a backgammon with the given board state.";
+}
+
+TEST(OutcomeTest, TestPlayer1Wins) {
+    int init_board[31] = {0, 0, 0, 0, 0, 0, -2, -2, -2, -2, -2, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 6, -1, -1, -1};
+    Board b(init_board);
+    int outcome = b.getOutcome();
+    EXPECT_EQ(outcome, 1) << "Player 1 should win with the given board state.";
+    int gammon_board[31] = {0, 0, 0, 0, 0, 0, -15, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 6, -1, -1, -1};
+    Board gammon_b(gammon_board);
+    int gammon_outcome = gammon_b.getOutcome();
+    EXPECT_EQ(gammon_outcome, 2) << "Player 1 should win with a gammon with the given board state.";
+
+    int backgammon_board[31] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -15, 0,
+        0, 0, 4, 6, -1, -1, -1};
+
+    Board backgammon_b(backgammon_board);
+    int backgammon_outcome = backgammon_b.getOutcome();
+    EXPECT_EQ(backgammon_outcome, 3) << "Player 1 should win with a backgammon with the given board state.";
+}
 
 
 

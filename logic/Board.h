@@ -181,6 +181,15 @@ class Board {
          */
         bool isGameOver() const; 
 
+        /**
+         * @brief Gets the outcome of the game. 
+         * Returns 0 if game is ongoing, 1 if player 1 wins, -1 if player 2 wins,
+         * 2 if player 1 gets a gammon, -2 if player 2 gets a gammon,
+         * 3 if player 1 gets a backgammon, -3 if player 2 gets a backgammon.
+         * @return The outcome of the game as an integer.
+         */
+        int getOutcome() const;
+
 
 
 

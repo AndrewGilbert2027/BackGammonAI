@@ -30,7 +30,7 @@ Board::Board(const int boardState[31]) {
     // Initialize dice and current player
     std::fill(std::begin(dice), std::end(dice), 0);
     for (int i = 26; i < 30; ++i) {
-        if (boardState[i] != -1) {
+        if (boardState[i] != -1) { // Check if the die is valid
             dice[boardState[i] - 1] += 1; // Increment the count for the rolled die
         }
     }
@@ -285,6 +285,33 @@ std::vector<std::pair<int, int>> Board::validMovesDFS2() const {
         }
     }
     return validMoves; // Return valid moves
+}
+
+int Board::getOutcome() const {
+    // Check if player 1 has won
+    if (std::all_of(player1, player1 + 24, [](uint8_t p) { return p == 0; }) && bar1 == 0) {
+        if (bar2 > 0 || std::any_of(player2 + 18, player2 + 24, [](uint8_t p) { return p > 0; })) {
+            return 3; // Player 1 wins with a backgammon
+        }
+        else if (std::accumulate(player2, player2 + 24, 0) == 15) {
+            return 2; // Player 1 wins with a gammon
+        }
+        return 1; // Player 1 wins normally
+    }
+
+    // Check if player 2 has won
+    if (std::all_of(player2, player2 + 24, [](uint8_t p) { return p == 0; }) && bar2 == 0) {
+        if (bar1 > 0 || std::any_of(player1, player1 + 6, [](uint8_t p) { return p > 0; })) {
+            return -3; // Player 2 wins with a backgammon
+        }
+        else if (std::accumulate(player1, player1 + 24, 0) == 15) {
+            return -2; // Player 2 wins with a gammon
+        }
+        return -1; // Player 2 wins normally
+    }
+
+
+    return 0; // Game is still ongoing
 }
 
 std::vector<std::pair<int, int>> Board::validMovesPlayer1() const {
