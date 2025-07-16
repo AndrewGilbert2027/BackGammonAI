@@ -202,6 +202,7 @@ class Board {
         uint8_t dice[6];     // Array representing how many dice rolls for each number (used to avoid duplicate moves) 
                              // the player has rolled doubles, otherwise they are -1.
         int currentPlayer;   // Variable representing the current player (1 or -1).
+        std::vector<std::pair<int, int>> moves; // Vector to store valid moves for the current player (speed up for endgame checks)
 
 
     
